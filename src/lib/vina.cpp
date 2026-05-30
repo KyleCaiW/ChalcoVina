@@ -718,6 +718,10 @@ void Vina::show_score(const std::vector<double> energies) {
 	std::cout << "(1) Final Intermolecular Energy    : " << std::fixed << std::setprecision(3) << energies[1] + energies[2] << " (kcal/mol)\n";
 	std::cout << "    Ligand - Receptor              : " << std::fixed << std::setprecision(3) << energies[1] << " (kcal/mol)\n";
 	std::cout << "    Ligand - Flex side chains      : " << std::fixed << std::setprecision(3) << energies[2] << " (kcal/mol)\n";
+	/*****************************************************************************************/
+	if ((m_weight_interchb_O != 0.0 || m_weight_interchb_S != 0.0 || m_weight_interchb_N != 0.0) && energies.size() > 8)
+		std::cout << "    Chalcogen Bond (weighted)      : " << std::fixed << std::setprecision(3) << energies[8] << " (kcal/mol)\n";
+	/*****************************************************************************************/
 	std::cout << "(2) Final Total Internal Energy    : " << std::fixed << std::setprecision(3) << energies[3] + energies[4] + energies[5] << " (kcal/mol)\n";
 	std::cout << "    Ligand                         : " << std::fixed << std::setprecision(3) << energies[5] << " (kcal/mol)\n";
 	std::cout << "    Flex   - Receptor              : " << std::fixed << std::setprecision(3) << energies[3] << " (kcal/mol)\n";
@@ -777,7 +781,6 @@ std::vector<double> Vina::score(double intramolecular_energy) {
 			std::vector<chalcogen_acceptor> acceptors = find_chalcogen_acceptors(m_model);
 			std::vector<chalcogen_donor_indices> donor_indices = find_chalcogen_donor_indices(m_model);
 			chb_energy = calculate_chalcogen_bond_energy(m_model, m_weight_interchb_O, m_weight_interchb_S, m_weight_interchb_N, gradients, acceptors, donor_indices);
-			std::cout << "Chalcogen Bond Energy (weighted): " << chb_energy << " (kcal/mol)\n";
 		}
 
 		// Add intermolecular chalcogen bond energy to intermolecular energy
@@ -818,6 +821,9 @@ std::vector<double> Vina::score(double intramolecular_energy) {
 	} else {
 		energies.push_back(intra);
 	}
+	/*****************************************************************************************/
+	energies.push_back(chb_energy); // [8] chalcogen bond (weighted)
+	/*****************************************************************************************/
 
 	return energies;
 }
@@ -1048,7 +1054,9 @@ void Vina::global_search(const int exhaustiveness, const int n_poses, const doub
 				poses[i].total = poses[i].inter + poses[i].intra; // cost function for optimization
 				poses[i].conf_independent = energies[6]; // "torsion"
 				poses[i].unbound = energies[7]; // specific to each scoring function
-
+				/*****************************************************************************************/
+				poses[i].chb = energies[8]; // chalcogen bond (weighted)
+				/*****************************************************************************************/
 				if (m_verbosity > 1) {
 					std::cout << "FINAL ENERGY: \n";
 					show_score(energies);
@@ -1080,11 +1088,22 @@ void Vina::global_search(const int exhaustiveness, const int n_poses, const doub
 		m_model.set(poses[0].c);
 		best_model = m_model;
 
+		/*****************************************************************************************/
+		bool chb_active = (m_weight_interchb_O != 0.0 || m_weight_interchb_S != 0.0 || m_weight_interchb_N != 0.0);
+		/*****************************************************************************************/
 		if (m_verbosity > 0) {
 			std::cout << '\n';
-			std::cout << "mode |   affinity | dist from best mode\n";
-			std::cout << "     | (kcal/mol) | rmsd l.b.| rmsd u.b.\n";
-			std::cout << "-----+------------+----------+----------\n";
+			/*****************************************************************************************/
+			if (chb_active) {
+				std::cout << "mode |   affinity | dist from best mode | chalcogen bond\n";
+				std::cout << "     | (kcal/mol) | rmsd l.b.| rmsd u.b.| (kcal/mol)\n";
+				std::cout << "-----+------------+----------+----------+-----------\n";
+			} else {
+				std::cout << "mode |   affinity | dist from best mode\n";
+				std::cout << "     | (kcal/mol) | rmsd l.b.| rmsd u.b.\n";
+				std::cout << "-----+------------+----------+----------\n";
+			}
+			/*****************************************************************************************/
 		}
 
 		VINA_FOR_IN(i, poses) {
@@ -1098,7 +1117,12 @@ void Vina::global_search(const int exhaustiveness, const int n_poses, const doub
 			if (m_verbosity > 0) {
 				std::cout << std::setw(4) << i + 1 << "    " << std::setw(9) << std::setprecision(4) << poses[i].e;
 				std::cout << "  " << std::setw(9) << std::setprecision(4) << poses[i].lb;
-				std::cout << "  " << std::setw(9) << std::setprecision(4) << poses[i].ub << "\n";
+				std::cout << "  " << std::setw(9) << std::setprecision(4) << poses[i].ub;
+				/*****************************************************************************************/
+				if (chb_active)
+					std::cout << "  " << std::setw(9) << std::setprecision(4) << poses[i].chb;
+				std::cout << "\n";
+				/*****************************************************************************************/
 			}
 		}
 
