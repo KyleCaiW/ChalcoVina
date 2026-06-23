@@ -3,7 +3,6 @@ ChalcoVina: Enabling Docking for Chalcogen Bond
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Academic-Paper](https://img.shields.io/badge/Paper-10.1021/example-red.svg)](https://doi.org/your-paper-doi)
-[![PyPI version fury.io](https://img.shields.io/badge/version-1.0.0-green.svg)](https://pypi.python.org/pypi/ansicolortags/)
 
 **ChalcoVina** is an augmented version of the AutoDock Vina 1.2.7, specifically developed to simultaneously evaluate intermolecular and intramolecular chalcogen bonds. For more details, please refer to the paper.
 
