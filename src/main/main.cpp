@@ -72,7 +72,7 @@ void check_occurrence(boost::program_options::variables_map& vm, boost::program_
 int main(int argc, char* argv[]) {
 	using namespace boost::program_options;
 	const std::string git_version = VERSION;
-	const std::string version_string = "AutoDock Vina " + git_version;
+	const std::string version_string = "ChalcoVina " + git_version;
 	const std::string error_message = "\n\n\
 Please report bugs through the Issue Tracker on GitHub \n\
 (https://github.com/ccsb-scripps/AutoDock-Vina/issues)., so\n\
