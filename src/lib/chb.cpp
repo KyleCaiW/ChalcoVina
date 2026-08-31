@@ -631,3 +631,98 @@ fl calculate_chalcogen_bond_energy(const model& m, fl weight_O, fl weight_S, fl 
 
     return total_energy;
 }
+
+std::vector<chalcogen_bond_detail> analyze_chalcogen_bonds(const model& m,
+    fl weight_O, fl weight_S, fl weight_N) {
+    std::vector<chalcogen_bond_detail> details;
+
+    std::vector<chalcogen_donor_indices> cached_donor_indices = find_chalcogen_donor_indices(m);
+    std::vector<chalcogen_donor> donors = update_chalcogen_donors_from_indices(m, cached_donor_indices);
+    std::vector<chalcogen_acceptor> acceptors = find_chalcogen_acceptors(m);
+
+    if (donors.empty() || acceptors.empty()) {
+        return details;
+    }
+
+    for (const auto& donor : donors) {
+        const vec& B = donor.coords;
+        const vec& A = donor.neighbor1_coords;
+        const vec& C = donor.neighbor2_coords;
+
+        vec AB = B - A;
+        vec CB = B - C;
+
+        fl ab_norm = AB.norm();
+        fl cb_norm = CB.norm();
+
+        if (ab_norm < epsilon_fl || cb_norm < epsilon_fl) continue;
+
+        vec AB_norm = (1.0 / ab_norm) * AB;
+        vec CB_norm = (1.0 / cb_norm) * CB;
+
+        for (const auto& acceptor : acceptors) {
+            fl weight;
+            switch (acceptor.ad_type) {
+                case AD_TYPE_OA: weight = weight_O; break;
+                case AD_TYPE_SA: weight = weight_S; break;
+                case AD_TYPE_NA: weight = weight_N; break;
+                default: continue;
+            }
+
+            if (weight == 0.0) continue;
+
+            const vec& D = acceptor.coords;
+            vec BD = D - B;
+
+            fl dist_sq = BD.norm_sqr();
+            if (dist_sq > MAX_DISTANCE_SQ || dist_sq < MIN_DISTANCE_SQ) {
+                continue;
+            }
+
+            fl distance = std::sqrt(dist_sq);
+            vec BD_norm = (1.0 / distance) * BD;
+
+            fl cos_theta_AB = AB_norm * BD_norm;
+            fl cos_theta_CB = CB_norm * BD_norm;
+
+            cos_theta_AB = std::max(static_cast<fl>(-1.0), std::min(static_cast<fl>(1.0), cos_theta_AB));
+            cos_theta_CB = std::max(static_cast<fl>(-1.0), std::min(static_cast<fl>(1.0), cos_theta_CB));
+
+            bool use_CB_side = (cos_theta_CB >= cos_theta_AB);
+            fl cos_polar = use_CB_side ? cos_theta_CB : cos_theta_AB;
+            fl polar_angle_rad = std::acos(cos_polar);
+            fl polar_angle_deg = polar_angle_rad * (180.0 / M_PI);
+
+            if (polar_angle_deg > MAX_POLAR_ANGLE_DEG) {
+                continue;
+            }
+
+            fl azimuthal_angle_rad;
+            if (use_CB_side) {
+                azimuthal_angle_rad = dihedral(D, B, C, A);
+            } else {
+                azimuthal_angle_rad = dihedral(D, B, A, C);
+            }
+
+            fl azimuthal_angle_deg = std::abs(azimuthal_angle_rad * (180.0 / M_PI));
+
+            fl dE_dr, dE_dtheta, dE_dphi;
+            fl raw_energy = CHBTableManager::get_map_energy_gradient(distance, polar_angle_deg,
+                azimuthal_angle_deg, acceptor.ad_type, dE_dr, dE_dtheta, dE_dphi);
+
+            fl weighted_energy = raw_energy * weight;
+
+            chalcogen_bond_detail detail;
+            detail.acceptor_type = acceptor.ad_type;
+            detail.distance = distance;
+            detail.polar_angle_deg = polar_angle_deg;
+            detail.azimuthal_angle_deg = azimuthal_angle_deg;
+            detail.raw_energy = raw_energy;
+            detail.weighted_energy = weighted_energy;
+
+            details.push_back(detail);
+        }
+    }
+
+    return details;
+}

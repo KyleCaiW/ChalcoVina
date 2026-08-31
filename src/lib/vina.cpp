@@ -1126,6 +1126,27 @@ void Vina::global_search(const int exhaustiveness, const int n_poses, const doub
 			}
 		}
 
+		/*****************************************************************************************/
+		if (chb_active && m_verbosity > 0 && !poses.empty()) {
+			m_model.set(poses[0].c);
+			auto details = analyze_chalcogen_bonds(m_model,
+				m_weight_interchb_O, m_weight_interchb_S, m_weight_interchb_N);
+			if (!details.empty()) {
+				std::cout << "\nTop 1 pose chalcogen bond details:\n";
+				std::cout << "Type | Distance | Polar | Azimuthal | Weighted Energy\n";
+				for (const auto& d : details) {
+					const char* type_str = (d.acceptor_type == AD_TYPE_OA) ? "S-O" :
+					                       (d.acceptor_type == AD_TYPE_SA) ? "S-S" : "S-N";
+					std::cout << type_str << " | "
+					          << std::fixed << std::setprecision(3) << std::setw(8) << d.distance << " A | "
+					          << std::setw(6) << d.polar_angle_deg << " deg | "
+					          << std::setw(10) << d.azimuthal_angle_deg << " deg | "
+					          << std::setw(8) << d.weighted_energy << " kcal/mol\n";
+				}
+			}
+		}
+		/*****************************************************************************************/
+
 		// Clean up by putting back the best pose in model
 		m_model.set(poses[0].c);
 	} else {

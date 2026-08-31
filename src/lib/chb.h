@@ -77,6 +77,15 @@ struct intra_chb_pair {
     sz acceptor_type;
 };
 
+struct chalcogen_bond_detail {
+    sz acceptor_type;
+    fl distance;
+    fl polar_angle_deg;
+    fl azimuthal_angle_deg;
+    fl raw_energy;
+    fl weighted_energy;
+};
+
 // ==================== ChB Interface ====================
 
 // ChB map lookup and management interface
@@ -114,6 +123,9 @@ std::vector<chalcogen_donor_indices> find_chalcogen_donor_indices(const model& m
 std::vector<chalcogen_donor> update_chalcogen_donors_from_indices(const model& m,
                                    const std::vector<chalcogen_donor_indices>& cached_indices);
 std::vector<chalcogen_acceptor> find_chalcogen_acceptors(const model& m);
+
+std::vector<chalcogen_bond_detail> analyze_chalcogen_bonds(const model& m,
+    fl weight_O, fl weight_S, fl weight_N);
 
 // Functions to calculate chalcogen bond energy and gradients
 fl calculate_chalcogen_bond_energy(const model& m, fl weight_O, fl weight_S, fl weight_N, std::vector<vec>& gradients,
