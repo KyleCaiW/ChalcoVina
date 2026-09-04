@@ -33,7 +33,12 @@ void Vina::cite() {
 	const std::string cite_message = "\
 #################################################################\n\
 # If you used ChalcoVina in your work, please cite:             #\n\
-# [ChalcoVina citation placeholder - to be added]               #\n\
+#                                                               #\n\
+# W. Cai, Z. Li, Y. Wang, W. Yu, Y. Sun, Y. Xu, Q. Zhu, Y. Zou  #\n\
+# ChalcoVina: Enhancing Molecular Docking Accuracy by           #\n\
+# Incorporating Chalcogen Bond-Aware Scoring,                   #\n\
+# J. Chem. Inf. Model. (2026)                                   #\n\
+# DOI 10.1021/acs.jcim.6c02680                                  #\n\
 #                                                               #\n\
 # If you used AutoDock Vina in your work, please cite:          #\n\
 #                                                               #\n\
@@ -47,9 +52,6 @@ void Vina::cite() {
 # with a new scoring function, efficient optimization and       #\n\
 # multithreading, J. Comp. Chem. (2010)                         #\n\
 # DOI 10.1002/jcc.21334                                         #\n\
-#                                                               #\n\
-# Please see https://github.com/ccsb-scripps/AutoDock-Vina for  #\n\
-# more information.                                             #\n\
 #################################################################\n";
 
 	std::cout << cite_message << '\n';
